@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>CTI Dashboard - Threat Trends</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        accent: '#4ade80'
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Chart.js (only if you use dynamic charts) -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gray-800 p-5 shadow-md flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-accent">Threat Trends</h1>
+        <a href="/" class="text-sm text-blue-400 hover:underline">Back to Home</a>
+    </header>
+
+    <!-- Main Content -->
+    <main class="p-6 space-y-6">
+
+        <!-- Section: Description -->
+        <section class="bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 class="text-lg font-semibold mb-2">Threat Intelligence Over Time</h2>
+            <p class="text-gray-300">
+                The graph below shows threat detections collected from IOC lookups over the past days.
+                It helps visualize changes in malicious activity over time.
+            </p>
+        </section>
+
+        <!-- Section: Trend Chart -->
+        <section class="bg-gray-800 p-6 rounded-lg shadow-md">
+
+            <h3 class="text-md font-semibold mb-4">Threat Volume per Day</h3>
+
+            <!-- OPTION A: Image-Based Graph (matplotlib-generated) -->
+            <img src="/static/images/threat_trend.png"
+                 alt="Threat Trend Chart"
+                 class="rounded mx-auto shadow-lg max-h-96 border border-gray-600">
+            <img src="{{ url_for('static', filename='images/threat_trend_image.png') }}" alt="Threat Trends">
+
+            <!-- OPTION B: Chart.js (Dynamic Chart)
+            <canvas id="trendChart" class="w-full max-w-3xl mx-auto"></canvas>
+            <script>
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                const trendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: {{ labels|tojson }},
+                        datasets: [{
+                            label: 'Threat Count',
+                            data: {{ counts|tojson }},
+                            fill: false,
+                            borderColor: '#4ade80',
+                            tension: 0.2
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: { labels: { color: 'white' } }
+                        },
+                        scales: {
+                            x: { ticks: { color: 'white' }, grid: { color: '#374151' }},
+                            y: { ticks: { color: 'white' }, grid: { color: '#374151' }}
+                        }
+                    }
+                });
+            </script>
+            -->
+
+        </section>
+
+        <!-- Section: Insights -->
+        <section class="bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-md font-semibold mb-2">Insights</h3>
+            <ul class="list-disc list-inside text-gray-300 space-y-1">
+                <li>High spikes may indicate targeted campaigns or malware activity.</li>
+                <li>Use this data to prioritize investigations and mitigation actions.</li>
+                <li>Combine with IOC severity tags for deeper insights.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-center text-sm text-gray-500 py-4">
+        &copy; {{ current_year }} CTI Dashboard by Aditya Kamble
+    </footer>
+<h2>Threat Trends</h2>
+<img src="{{ url_for('static', filename='images/threat_trend.png') }}" alt="Threat Trend Graph" width="700">
+
+</body>
+</html>

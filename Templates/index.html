@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>CTI Dashboard - Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1f2937',
+                        accent: '#4ade80'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gray-800 p-5 shadow-md flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-accent">CTI Dashboard</h1>
+        <button id="themeToggle" class="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600">
+            Toggle Theme
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="p-6 max-w-3xl mx-auto space-y-8">
+
+        <!-- Welcome Section -->
+        <section class="bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-2">Welcome to the Cyber Threat Intelligence Dashboard</h2>
+            <p class="text-gray-300">
+                This platform allows you to search and analyze Indicators of Compromise (IOCs) like IP addresses,
+                domains, and file hashes. Get real-time threat insights and trends powered by VirusTotal and MongoDB.
+            </p>
+        </section>
+
+        <!-- IOC Search -->
+        <section class="bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold mb-4">IOC Lookup</h3>
+            <form method="POST" action="/lookup" class="flex flex-col sm:flex-row gap-4">
+                <input type="text" name="ioc" placeholder="Enter IP, domain, or hash"
+                       class="flex-1 px-4 py-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-accent">
+                <button type="submit"
+                        class="bg-accent text-black px-6 py-2 rounded hover:bg-green-500 font-semibold">
+                    Search
+                </button>
+            </form>
+        </section>
+
+        <!-- Navigation to Dashboard -->
+        <section class="text-center">
+            <a href="/dashboard"
+               class="inline-block mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium">
+               Go to Full Dashboard
+            </a>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-center text-sm text-gray-500 py-4">
+        &copy; {{ current_year }} CTI Dashboard by Aditya Kamble
+    </footer>
+
+    <!-- Theme Toggle Script -->
+    <script>
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+# CTI Dashboard - app.py
+
+from flask import Flask, render_template, request, jsonify, send_file
+from pymongo import MongoClient
+from utils.vt_lookup import lookup_ioc
+import requests
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
+import datetime
+import os
+import random
+import collections
+import json
+
+app = Flask(__name__, template_folder='templates')
+template_dir = os.path.abspath('H:/JJKS2/vi/templates')
+
+# ----------------- Configuration -----------------
+VT_API_KEY = '8b85f6ea336efeea1d989138a2f3a46c64e438c8d1534ec59a24eb91cfd2b6d5'
+MONGO_URI = 'mongodb://localhost:27017'
+client = MongoClient(MONGO_URI)
+db = client.cti_dashboard
+
+# ----------------- VirusTotal API -----------------
+def query_virustotal(ioc):
+    url = f"https://www.virustotal.com/api/v3/search?query={ioc}"
+    headers = {"x-apikey": VT_API_KEY}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {"error": response.text}
+    
+img_dir = os.path.join('static', 'images')
+os.makedirs(img_dir, exist_ok=True)
+
+img_dir = os.path.join(img_dir, 'threat_trend_image.png')
+
+def lookup_ioc(ioc):
+    # Dummy response simulating a lookup result
+    return {
+        "ioc": ioc,
+        "threat_level": "High",
+        "tags": ["malware", "APT29", "phishing"],
+        "source": "VirusTotal",
+        "details": {
+            "first_seen": "2024-05-01",
+            "last_seen": "2025-06-01",
+            "related_domains": ["bad.com", "evil.org"]
+        }
+    }
+
+
+# ----------------- Routes -----------------
+@app.route('/')
+def home():
+    #Simulation Data
+
+    data = list(db.threats.find().sort("timestamp", -1).limit(50))
+    return render_template('dashboard.html',)
+
+    data = [
+        {"indicator": "192.168.1.1", "type": "IP", "source": "Manual", "created_at": "2025-06-25"},
+        {"indicator": "example.com", "type": "Domain", "source": "Feed", "created_at": "2025-06-24"}
+    ]
+    return render_template("dashboard.html", data=data)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+@app.route('/')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/check', methods=['POST'])
+def check_ioc():
+    ioc = request.form.get('ioc')
+    if not ioc:
+        return jsonify({'error': 'No IOC provided'}), 400
+    # Here you would do something with the IOC (lookup, scan, etc.)
+    result = f"Checked IOC: {ioc}"
+    return jsonify({'result': f'Checked IOC: {ioc}'})
+
+@app.route('/lookup', methods=['POST'])
+def lookup():
+    ioc = request.form['ioc']
+    # Example simulated result
+    result = lookup_ioc(ioc)  # Your function querying VirusTotal or DB
+    threat_level = result.get("threat_level")
+    tags = result.get("tags", [])
+    raw_output = json.dumps(result, indent=2)
+
+    return render_template("result.html", ioc=ioc, result=raw_output, threat_level=threat_level, tags=tags)
+
+
+
+@app.route('/trends')
+def trends():
+    cursor = db.threats.find()
+    df = pd.DataFrame(list(cursor))
+    
+    if df.empty or 'timestamp' not in df.columns:
+        # Return a placeholder image
+        fig, ax = plt.subplots()
+        ax.text(0.5, 0.5, 'No data yet', horizontalalignment='center', verticalalignment='center')
+        ax.axis('off')
+        img = io.BytesIO()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        return send_file(img, mimetype='image/png')
+
+    df['date'] = pd.to_datetime(df['timestamp']).dt.date
+    trend_data = df.groupby('date').size()
+
+    fig, ax = plt.subplots()
+    trend_data.plot(kind='line', ax=ax)
+    ax.set_title('Threat Detection Over Time')
+    ax.set_ylabel('Number of IOCs')
+    ax.set_xlabel('Date')
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
+
+
+
+@app.route('/check', methods=['POST'])
+def check():
+    ioc = request.form.get('ioc')
+    tag = request.form.get('tag', '')
+    result = query_virustotal(ioc)
+
+    # Save to MongoDB
+    entry = {
+        'ioc': ioc,
+        'tag': tag,
+        'result': result,
+        'timestamp': datetime.datetime.utcnow()
+    }
+    db.threats.insert_one(entry)
+    return jsonify({'status': 'success', 'data': result})
+
+@app.route("/check", methods=["POST"])
+def check():
+    return {"status": "check received"}, 200
+
+@app.route("/trends", methods=["GET"])
+def trends():
+    return {"trends": []}, 200
+
+@app.route("/export", methods=["GET"])
+def export():
+    return {"message": "No data yet"}, 200
+
+@app.route('/trends')
+def trends():
+    return render_template('trends.html')  # make sure trends.html exists in /templates/
+
+from flask import Flask, render_template, request
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/trends')
+def trends():
+    return render_template('trends.html')  # make sure this file exists
+
+@app.route('/check', methods=['POST'])
+def check():
+    # You can access form data with request.form.get('field_name')
+    return "Check route received POST!"
+
+
+@app.route('/trends')
+def trends():
+    cursor = db.threats.find()
+    df = pd.DataFrame(list(cursor))
+    if df.empty:
+        return 'No data to display.'
+
+    df['date'] = pd.to_datetime(df['timestamp']).dt.date
+    trend_data = df.groupby('date').size()
+
+    fig, ax = plt.subplots()
+    trend_data.plot(kind='line', ax=ax)
+    ax.set_title('Threat Detection Over Time')
+    ax.set_ylabel('Number of IOCs')
+    ax.set_xlabel('Date')
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
+
+@app.route('/threat-trend.png')
+def threat_trend():
+    today = datetime.datetime.utcnow()
+    days = [today - datetime.timedelta(days=i) for i in range(6, -1, -1)]
+
+    date_labels = [day.strftime('%b %d') for day in days]
+    counts = []
+
+    for day in days:
+        start = datetime.datetime(day.year, day.month, day.day)
+        end = start + datetime.timedelta(days=1)
+        count = collections.count_documents({"timestamp": {"$gte": start, "$lt": end}})
+        counts.append(count)
+
+    # Plotting
+    plt.figure(figsize=(6, 3))
+    plt.plot(date_labels, counts, marker='o', color='skyblue')
+    plt.title("IOC Submissions (Last 7 Days)")
+    plt.xlabel("Date")
+    plt.ylabel("Count")
+    plt.grid(True)
+    plt.tight_layout()
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
+
+
+@app.route('/check', methods=['POST'])
+def check_ioc():
+    data = request.form.get('ioc')  # or use request.json if you're sending JSON
+    # Process the IOC here
+    return jsonify({'result': 'IOC checked successfully'})
+
+@app.route('/check', methods=['POST'])
+def check_ioc():
+    data = request.get_json()
+    ioc = data.get('ioc')
+    return jsonify({'result': f'Checked IOC: {ioc}'})
+
+@app.route('/check', methods=['POST'])
+def check():
+    # handle your form data or logic here
+    return "Check route working!"
+
+@app.route('/')
+def index():
+    labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    counts = [4, 6, 7, 5, 8, 2, 3]  # Replace with real data
+    return render_template("index.html", labels=labels, counts=counts)
+
+def generate_threat_trend_image():
+    days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    counts = [5, 3, 8, 2, 7, 4, 6]
+
+    img_dir = os.path.join('static', 'images')
+    os.makedirs(img_dir, exist_ok=True)
+    img_path = os.path.join(img_dir, 'threat_trend_image.png')
+
+    plt.figure()
+    plt.plot(days, counts, marker='o')
+    plt.title('Threat Trend')
+    plt.xlabel('Day')
+    plt.ylabel('Threats')
+    plt.grid(True)
+
+    plt.savefig(img_path)
+    plt.close()
+
+@app.route('/')
+def dashboard():
+    generate_threat_trend_image()
+    return render_template('dashboard.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
+@app.route('/export')
+def export():
+    cursor = db.threats.find()
+    df = pd.DataFrame(list(cursor))
+    df = df[['ioc', 'tag', 'timestamp']]
+    output = io.StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+    return send_file(io.BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='ioc_export.csv')
+
+# ----------------- Run -----------------
+if __name__ == '__main__':
+    app.run(debug=True)
