@@ -15,19 +15,10 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""DNS rdata type classes"""
+import dns.immutable
+import dns.rdtypes.mxbase
 
-__all__ = [
-    "ANY",
-    "IN",
-    "CH",
-    "dnskeybase",
-    "dsbase",
-    "euibase",
-    "mxbase",
-    "nsbase",
-    "svcbbase",
-    "tlsabase",
-    "txtbase",
-    "util",
-]
+
+@dns.immutable.immutable
+class KX(dns.rdtypes.mxbase.UncompressedDowncasingMX):
+    """KX record"""

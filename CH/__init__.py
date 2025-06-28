@@ -15,19 +15,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""DNS rdata type classes"""
+"""Class CH rdata type classes."""
 
 __all__ = [
-    "ANY",
-    "IN",
-    "CH",
-    "dnskeybase",
-    "dsbase",
-    "euibase",
-    "mxbase",
-    "nsbase",
-    "svcbbase",
-    "tlsabase",
-    "txtbase",
-    "util",
+    "A",
 ]
