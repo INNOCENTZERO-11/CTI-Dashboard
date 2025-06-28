@@ -1,30 +1,8 @@
-"""fontTools.ttLib -- a package for dealing with TrueType fonts."""
-
-from fontTools.config import OPTIONS
-from fontTools.misc.loggingTools import deprecateFunction
 import logging
-
+from fontTools.misc.loggingTools import configLogger
 
 log = logging.getLogger(__name__)
 
+version = __version__ = "4.58.4"
 
-OPTIMIZE_FONT_SPEED = OPTIONS["fontTools.ttLib:OPTIMIZE_FONT_SPEED"]
-
-
-class TTLibError(Exception):
-    pass
-
-
-class TTLibFileIsCollectionError(TTLibError):
-    pass
-
-
-@deprecateFunction("use logging instead", category=DeprecationWarning)
-def debugmsg(msg):
-    import time
-
-    print(msg + time.strftime("  (%H:%M:%S)", time.localtime(time.time())))
-
-
-from fontTools.ttLib.ttFont import *
-from fontTools.ttLib.ttCollection import TTCollection
+__all__ = ["version", "log", "configLogger"]
